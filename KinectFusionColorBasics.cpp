@@ -9,7 +9,7 @@
 #include <string>
 #include <strsafe.h>
 #define _USE_MATH_DEFINES
-#define SAVEINTERVAL 20
+#define SAVEINTERVAL 1
 #include <math.h>
 #include <new>
 
@@ -21,7 +21,7 @@
 #pragma warning(pop)
 
 #define IMAGEOFFSET 0
-// Project includes
+// Project include
 #include "resource.h"
 #include "KinectFusionColorBasics.h"
 using namespace std;
@@ -146,9 +146,9 @@ CKinectFusionColorBasics::CKinectFusionColorBasics() :
     SetIdentityMatrix(m_worldToCameraTransform);
     SetIdentityMatrix(m_defaultWorldToVolumeTransform);
 
-	sprintf_s(pathprefix_image,"D:/yanhang/texturemapping/room/image/frame");
-	sprintf_s(pathprefix_geometry,"D:/yanhang/texturemapping/room/Geometry/frame");
-	sprintf_s(pathprefix_depth,"D:/yanhang/texturemapping/room/depth/frame_depth");
+	sprintf_s(pathprefix_image,"D:/yanhang/RenderProject/room/image/frame");
+	sprintf_s(pathprefix_geometry,"D:/yanhang/RenderProject/room/Geometry/frame");
+	sprintf_s(pathprefix_depth,"D:/yanhang/RenderProject/room/depth/frame_depth");
 
     m_hNextDepthFrameEvent = CreateEvent(
         nullptr,
@@ -422,7 +422,7 @@ LRESULT CALLBACK CKinectFusionColorBasics::DlgProc(HWND hWnd, UINT message, WPAR
 
 				if (SUCCEEDED(hr))
 				{
-					string meshFileName("D:/yanhang/texturemapping/room/Mesh.off");
+					string meshFileName("D:/yanhang/RenderProject/room/Mesh.off");
 					hr = SaveMeshFile(mesh, meshFileName);
 
 					if (SUCCEEDED(hr))
@@ -752,38 +752,6 @@ HRESULT CKinectFusionColorBasics::CopyExtendedDepth(NUI_IMAGE_FRAME &imageFrame)
     // Lock the frame data to access the un-clamped NUI_DEPTH_IMAGE_PIXELs
     hr = extendedDepthTex->LockRect(0, &extendedDepthLockedRect, nullptr, 0);
 
-	//Save the color image using OpenCV and current camera parameters
-	
-	/*if(m_imageSaveInterval == 0)
-	{
-		SetStatusMessage(L"Getting POINTCLOUD!");
-
-		NUI_DEPTH_IMAGE_PIXEL *pBuffer = reinterpret_cast<NUI_DEPTH_IMAGE_PIXEL *>(extendedDepthLockedRect.pBits);
-		DWORD matwidth,matheight;
-		NuiImageResolutionToSize(m_depthImageResolution,matwidth,matheight);
-		cv::Mat savemat = cv::Mat(matheight,matwidth,CV_8UC3);
-
-		NUI_DEPTH_IMAGE_PIXEL *cur = pBuffer;
-		NUI_DEPTH_IMAGE_PIXEL *end = pBuffer + matwidth*matheight;
-
-		Vector4 *skeleton = new Vector4[matwidth*matheight];
-		hr = m_pMapper->MapDepthFrameToSkeletonFrame(m_depthImageResolution,m_cDepthImagePixels,pBuffer,m_cDepthImagePixels,skeleton);
-
-		Matrix4 savePara;
-		m_pVolume->GetCurrentWorldToCameraTransform(&savePara);
-		externalPara.push_back(savePara);
-
-		vector <Vector4> worldpoints_cur;
-		for(int i=0;i<m_cDepthImagePixels;i++)
-			worldpoints_cur.push_back(skeleton[i]);
-
-		worldpoints.push_back(worldpoints_cur);
-
-		
-
-		SetStatusMessage(L"Getting DONE!");
-	}*/
-
     if (FAILED(hr) || extendedDepthLockedRect.Pitch == 0)
     {
         SetStatusMessage(L"Error getting extended depth texture pixels.");
@@ -840,32 +808,6 @@ HRESULT CKinectFusionColorBasics::CopyColor(NUI_IMAGE_FRAME &imageFrame)
 	int pitch = srcLockedRect.Pitch;
 	int size = srcLockedRect.size;
 
-
-	/*//Save the color image using OpenCV and current camera parameters
-	if(m_imageSaveInterval == 0)
-	{
-		BYTE *pBuffer = srcLockedRect.pBits;
-		DWORD matwidth,matheight;
-		NuiImageResolutionToSize(m_colorImageResolution,matwidth,matheight);
-		cv::Mat savemat = cv::Mat(matheight,matwidth,CV_8UC3);
-
-		for(UINT y=0;y<matheight;y++)
-		{
-			for(UINT x=0;x<matwidth;x++)
-			{
-				savemat.at<cv::Vec3b>(y,x)[0] = static_cast<uchar>(pBuffer[y*pitch + x*4]);
-				savemat.at<cv::Vec3b>(y,x)[1] = static_cast<uchar>(pBuffer[y*pitch + x*4 + 1]);
-				savemat.at<cv::Vec3b>(y,x)[2] = static_cast<uchar>(pBuffer[y*pitch + x*4 + 2]);
-			}
-		}
-
-		saveImages_color.push_back(savemat);
-		m_imageSaveInterval = SAVEINTERVAL;
-
-		framecount++;
-	}
-	else
-		m_imageSaveInterval--;*/
 
     if (FAILED(hr) || srcLockedRect.Pitch == 0)
     {
@@ -1199,20 +1141,19 @@ void CKinectFusionColorBasics::ProcessDepth()
 	{
 		//save the texture image and corresponding camera pose
 		//map the depth to color and save RGB image
-		NUI_COLOR_IMAGE_POINT *colorpoints = new NUI_COLOR_IMAGE_POINT[m_cColorImagePixels];
-		hr = m_pMapper->MapDepthFrameToColorFrame(m_depthImageResolution,m_cDepthImagePixels,m_pDepthImagePixelBuffer,NUI_IMAGE_TYPE_COLOR,m_colorImageResolution,m_cColorImagePixels,colorpoints);
-		//Save the color image using OpenCV and current camera parameters
-		INuiFrameTexture *colortexture = m_pColorImage->pFrameTexture;
-		NUI_LOCKED_RECT rgblock;
-		hr = colortexture->LockRect(0,&rgblock,nullptr,0);
 		if(m_imageSaveInterval == 0)
 		{
+			NUI_COLOR_IMAGE_POINT *colorpoints = new NUI_COLOR_IMAGE_POINT[m_cColorImagePixels];
+			hr = m_pMapper->MapDepthFrameToColorFrame(m_depthImageResolution,m_cDepthImagePixels,m_pDepthImagePixelBuffer,NUI_IMAGE_TYPE_COLOR,m_colorImageResolution,m_cColorImagePixels,colorpoints);
+			INuiFrameTexture *colortexture = m_pColorImage->pFrameTexture;
+			NUI_LOCKED_RECT rgblock;
+			hr = colortexture->LockRect(0,&rgblock,nullptr,0);
 			BYTE *pBuffer = rgblock.pBits;
 			int pitch = rgblock.Pitch;
 			DWORD matwidth,matheight;
 			NuiImageResolutionToSize(m_colorImageResolution,matwidth,matheight);
 			cv::Mat savemat = cv::Mat(matheight,matwidth,CV_8UC3);
-			//cv::Mat savemat2 = cv::Mat(matheight,matwidth,CV_8UC3);
+			Mat savemat2 = Mat(matheight,matwidth,CV_8UC3);
 			for(UINT y=0;y<matheight;y++)
 			{
 				for(UINT x=0;x<matwidth;x++)
@@ -1227,15 +1168,13 @@ void CKinectFusionColorBasics::ProcessDepth()
 						savemat.at<cv::Vec3b>(y,x)[2] = static_cast<uchar>(pBuffer[cory*pitch + corx*4 + 2]);
 					}
 
-					/*savemat2.at<cv::Vec3b>(y,x)[0] = static_cast<uchar>(pBuffer[y*pitch + x*4]);
-					savemat2.at<cv::Vec3b>(y,x)[1] = static_cast<uchar>(pBuffer[y*pitch + x*4 + 1]);
-					savemat2.at<cv::Vec3b>(y,x)[2] = static_cast<uchar>(pBuffer[y*pitch + x*4 + 2]);*/
+					savemat2.at<Vec3b>(y,x)[0] = static_cast<uchar>(pBuffer[y*pitch+x*4]);
+					savemat2.at<Vec3b>(y,x)[1] = static_cast<uchar>(pBuffer[y*pitch+x*4 + 1]);
+					savemat2.at<Vec3b>(y,x)[2] = static_cast<uchar>(pBuffer[y*pitch+x*4 + 2]);
 				}
 			}
-
 			saveImages_color.push_back(savemat);
-			//saveImages_color2.push_back(savemat2);
-
+			saveImages_color2.push_back(savemat2);
 			//Save the camera pose
 			Matrix4 savePara;
 			m_pVolume->GetCurrentWorldToCameraTransform(&savePara);
@@ -1243,11 +1182,12 @@ void CKinectFusionColorBasics::ProcessDepth()
 
 			m_imageSaveInterval = SAVEINTERVAL;
 			framecount++;
+
+			colortexture->UnlockRect(0);
+		delete colorpoints;
 		}
 		else
 			m_imageSaveInterval--;
-		colortexture->UnlockRect(0);
-		delete colorpoints;
 	}
 
 
@@ -1526,9 +1466,9 @@ HRESULT CKinectFusionColorBasics::SaveMeshFile(INuiFusionColorMesh* pMesh, std::
 		sprintf(buffer,"%s%03d.png",pathprefix_image,i);
 		cv::imwrite(buffer,saveImages_color[i]);
 
-		/*char buffer2[100];
+		char buffer2[100];
 		sprintf(buffer2,"%s%03d_2.png",pathprefix_image,i);
-		cv::imwrite(buffer2,saveImages_color2[i]);*/
+		cv::imwrite(buffer2,saveImages_color2[i]);
 	}
 
 	/*SetStatusMessage(L"Saving point clouds...");
@@ -1589,7 +1529,7 @@ HRESULT CKinectFusionColorBasics::SaveMeshFile(INuiFusionColorMesh* pMesh, std::
 		return E_ACCESSDENIED;
 	}
 
-	fprintf_s(meshFile, "OFF\n%d %d 0\n", numVertices, numTriangles);
+	fprintf_s(meshFile, "COFF\n%d %d 0\n", numVertices, numTriangles);
 
 	for (unsigned int t=0; t<numVertices; ++t)
 	{
